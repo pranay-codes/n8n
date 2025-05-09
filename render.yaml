@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: n8n
+    env: docker
+    plan: free
+    autoDeploy: false
+    dockerfilePath: ./docker/images/n8n/Dockerfile
+    envVars:
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_HOST
+        value: <your_supabase_host>
+      - key: DB_POSTGRESDB_PORT
+        value: 5432
+      - key: DB_POSTGRESDB_DATABASE
+        value: postgres
+      - key: DB_POSTGRESDB_USER
+        value: <your_supabase_user>
+      - key: DB_POSTGRESDB_PASSWORD
+        value: <your_supabase_password>
+      - key: DB_POSTGRESDB_SCHEMA
+        value: public
+      - key: N8N_ENCRYPTION_KEY
+        value: <your_key>
+      - key: N8N_HOST
+        value: n8n.onrender.com
+      - key: WEBHOOK_URL
+        value: https://n8n.onrender.com
