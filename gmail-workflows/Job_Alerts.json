@@ -1,0 +1,297 @@
+{
+  "name": "Job Alerts",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3ea44bb9-5cde-48ec-a241-53adc841bbbb",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        240
+      ],
+      "id": "bd8d5b9d-47bd-4b4a-b6a4-4581d48ed6a7",
+      "name": "Daily Scheduled Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 10,
+        "simple": false,
+        "filters": {
+          "q": "is:unread (from:jobalerts-noreply@linkedin.com)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        300,
+        100
+      ],
+      "id": "6435cebb-ef80-4f6d-9f9f-9ac9355c50a2",
+      "name": "Get Job Alert Mails",
+      "webhookId": "3dc21083-1760-49b4-b4d3-aceda9de293a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "alv8Tx6ih2bW9kmT",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a job parser. Given the following email text from the email, extract and return a json object with the following fields:\n- starred\n- company\n- job title\n- location\n- link\n- source\n\nif the source is from linkeden Clean the job link to remove all tracking or referral parameters (e.g., everything after ? or &). Here is the email content:\nIf the job description has the word java in it, than mark it as starred\n\n\n {{ $json.text }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        620,
+        100
+      ],
+      "id": "f6f04c97-d96e-4bb6-9ee6-0dfc6a0479f2",
+      "name": "Filter Linkedin Data",
+      "credentials": {
+        "openAiApi": {
+          "id": "byHxTSrfXt76LB83",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1v5V7_pGjIRnFJcjF_HIcUnvWnztR7mZsDgKqoehRb9I",
+          "mode": "list",
+          "cachedResultName": "N8N Job Alert",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1v5V7_pGjIRnFJcjF_HIcUnvWnztR7mZsDgKqoehRb9I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1v5V7_pGjIRnFJcjF_HIcUnvWnztR7mZsDgKqoehRb9I/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ new Date().toLocaleString('sv-SE', { timeZone: 'Pacific/Auckland' }).replace(' ', 'T') + '+12:00' }}",
+            "starred": "={{ $json.message.content.jobs[0].starred }}",
+            "company": "={{ $json.message.content.jobs[0].company }}",
+            "jobTitle": "={{ $json.message.content.jobs[0].job_title }}",
+            "location": "={{ $json.message.content.jobs[0].location }}",
+            "link": "={{ $json.message.content.jobs[0].link }}",
+            "source": "={{ $json.message.content.jobs[0].source }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "starred",
+              "displayName": "starred",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "jobTitle",
+              "displayName": "jobTitle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        980,
+        100
+      ],
+      "id": "f65946c7-4c6c-4261-b3a1-fdb09c1ce892",
+      "name": "Google Sheets",
+      "executeOnce": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xRHHFqE3ruvgkRoT",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Get Job Alert Mails').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        100
+      ],
+      "id": "1715dbb9-4f2f-425c-95e3-3777f24911e9",
+      "name": "Gmail",
+      "webhookId": "bc95aa03-0351-463e-813f-a8a958fd31fa",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "alv8Tx6ih2bW9kmT",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Job Alert Mails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Scheduled Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Job Alert Mails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Job Alert Mails": {
+      "main": [
+        [
+          {
+            "node": "Filter Linkedin Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Linkedin Data": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "97222819-6c00-4019-8068-9e2ff005d0e7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1df629342a4f69cceda9023475d89654552c05879ddea1f22f4646cbe908bf48"
+  },
+  "id": "66InE1SHlQ58MmVQ",
+  "tags": []
+}
