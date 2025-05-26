@@ -6,8 +6,8 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        0,
-        0
+        -20,
+        620
       ],
       "id": "3ea44bb9-5cde-48ec-a241-53adc841bbbb",
       "name": "Manual Trigger"
@@ -16,7 +16,9 @@
       "parameters": {
         "rule": {
           "interval": [
-            {}
+            {
+              "triggerAtHour": 8
+            }
           ]
         }
       },
@@ -24,7 +26,7 @@
       "typeVersion": 1.2,
       "position": [
         0,
-        240
+        800
       ],
       "id": "bd8d5b9d-47bd-4b4a-b6a4-4581d48ed6a7",
       "name": "Daily Scheduled Trigger"
@@ -35,15 +37,16 @@
         "limit": 10,
         "simple": false,
         "filters": {
-          "q": "is:unread (from:jobalerts-noreply@linkedin.com)"
+          "q": "is:unread (from:jobalerts-noreply@linkedin.com OR from:glassdoor.com OR from:seek.co.nz)",
+          "receivedAfter": "={{ new Date().toDateTime().minus(2, 'days').format('yyyy-MM-dd hh:mm:ss')}}"
         },
         "options": {}
       },
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        300,
-        100
+        220,
+        800
       ],
       "id": "6435cebb-ef80-4f6d-9f9f-9ac9355c50a2",
       "name": "Get Job Alert Mails",
@@ -76,8 +79,8 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        620,
-        100
+        660,
+        700
       ],
       "id": "f6f04c97-d96e-4bb6-9ee6-0dfc6a0479f2",
       "name": "Filter Linkedin Data",
@@ -87,6 +90,225 @@
           "name": "OpenAi account"
         }
       }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.headers.from }}",
+                    "rightValue": "linkedin.com",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "3abec023-2203-4552-b211-89c7b2033bc6"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2ee3497e-e11f-40fe-842f-5dff8f1e22ac",
+                    "leftValue": "={{ $json.headers.from }}",
+                    "rightValue": "noreply@glassdoor.com",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7d21bc86-9096-4360-ae89-3ab08ad81dee",
+                    "leftValue": "={{ $json.headers.from }}",
+                    "rightValue": "noreply@s.seek.co.nz",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        440,
+        900
+      ],
+      "id": "02a1a692-4ded-4481-a289-cad713f65701",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a job parser. Given the following email text from the email, extract and return a json object with the following fields:\n- starred - if the job description has the word java in it, mark it as starred\n- company\n- job title\n- location\n- link - identify the link for the job description\n- source\n\nif the source is from glassdoor. Clean the job link to remove all tracking or referral parameters. only include parameter jl and it's value. Here is the email content:\nIf the job description has the word java in it, than mark it as starred\n\n\n {{ $json.text }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        660,
+        900
+      ],
+      "id": "3b315685-f1ce-4b5a-b732-7bda65855c76",
+      "name": "Filter Glassdoor Data",
+      "credentials": {
+        "openAiApi": {
+          "id": "byHxTSrfXt76LB83",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "uniqueJobs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        2356,
+        1000
+      ],
+      "id": "c5d77a8d-dc65-4f6c-b310-e3ac11d85d2b",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "02d7dd5c-cbc2-4e14-ad79-5d8dc4279bf1",
+              "name": "jobs",
+              "value": "={{ $json.message.content.jobs }}",
+              "type": "array"
+            },
+            {
+              "id": "ad98a956-30bf-4bdd-97f5-f6b946f851ed",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1420,
+        1000
+      ],
+      "id": "ddd0cda6-cee7-499b-b7fe-4faca5cde6c1",
+      "name": "Set Fields"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        1000
+      ],
+      "id": "2a5fac88-2db1-43e6-859c-ed0d51d8b1a3",
+      "name": "Aggregate Data"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1v5V7_pGjIRnFJcjF_HIcUnvWnztR7mZsDgKqoehRb9I",
+          "mode": "list",
+          "cachedResultName": "N8N Job Alert",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1v5V7_pGjIRnFJcjF_HIcUnvWnztR7mZsDgKqoehRb9I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1v5V7_pGjIRnFJcjF_HIcUnvWnztR7mZsDgKqoehRb9I/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1916,
+        1000
+      ],
+      "id": "00b0c847-370c-47f4-aa84-0e5fe6af017d",
+      "name": "Query Current Job List",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xRHHFqE3ruvgkRoT",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const existingItems = $input.all();\n\nconst newJobs = $('Aggregate Data').first().json.data\n\nconst allJobs = [];\n\nfor (const newJob of newJobs) {\n  const dataBlocks = newJob.jobs || [];\n    allJobs.push(...dataBlocks);\n\n}\n// === STEP 2: Calculate cutoff date ===\nconst now = new Date();\nconst cutoff = new Date(now);\ncutoff.setDate(now.getDate() - 2); // configurd date to 1 month ago\n\n// === STEP 3: Filter existingItems to last 30 days ===\nconst recentItems = existingItems\n  .filter(row => {\n      const date = new Date(row.json.date);\n      return !isNaN(date.getTime()) && date >= cutoff;\n    });\n// STEP 4: Build Set of deduplication keys: \"company::jobTitle\"\nconst normalise = str => (str || \"\").toLowerCase().trim();\nconst buildKey = (company, jobTitle) => `${normalise(company)}::${normalise(jobTitle)}`;\n\nconst existingKeys = new Set(recentItems.map(item => buildKey(item.json.company, item.json.jobTitle)))\n\n// === STEP 5: Filter new jobs based on unique link ===\nconst uniqueJobs = allJobs.filter(job => {\n  const key = buildKey(job.company, job.job_title);\n  return !existingKeys.has(key)\n});\n\n// === STEP 6: Return result ===\nreturn {\n  json: {\n    uniqueJobs\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2136,
+        1000
+      ],
+      "id": "0e6666db-f18a-4f73-acae-7564cd60fe2b",
+      "name": "Filter List"
     },
     {
       "parameters": {
@@ -109,12 +331,12 @@
           "mappingMode": "defineBelow",
           "value": {
             "date": "={{ new Date().toLocaleString('sv-SE', { timeZone: 'Pacific/Auckland' }).replace(' ', 'T') + '+12:00' }}",
-            "starred": "={{ $json.message.content.jobs[0].starred }}",
-            "company": "={{ $json.message.content.jobs[0].company }}",
-            "jobTitle": "={{ $json.message.content.jobs[0].job_title }}",
-            "location": "={{ $json.message.content.jobs[0].location }}",
-            "link": "={{ $json.message.content.jobs[0].link }}",
-            "source": "={{ $json.message.content.jobs[0].source }}"
+            "company": "={{ $json.company }}",
+            "jobTitle": "={{ $json.job_title }}",
+            "location": "={{ $json.location }}",
+            "source": "={{ $json.source }}",
+            "starred": "={{ $json.starred }}",
+            "link": "={{ $json.link }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -170,7 +392,8 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "source",
@@ -190,11 +413,11 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        980,
-        100
+        2576,
+        1000
       ],
       "id": "f65946c7-4c6c-4261-b3a1-fdb09c1ce892",
-      "name": "Google Sheets",
+      "name": "Add to Sheets",
       "executeOnce": false,
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -205,24 +428,201 @@
     },
     {
       "parameters": {
-        "operation": "markAsRead",
-        "messageId": "={{ $('Get Job Alert Mails').item.json.id }}"
+        "jsCode": "const jobs = $input.all() || [];\n\nif (jobs.length === 0) {\n  return {\n    json: {\n      html: \"<p>No new jobs to report.</p>\"\n    }\n  };\n}\n\nconst today = new Date().toLocaleString('sv-SE', {timeZone: 'Pacific/Auckland'}).replace(' ', 'T').substring(0, 10)\nconst title = `Job listing for ` + today\n// HTML header\nlet html = `\n  <h2>${title}</h2>\n  <table border=\"1\" cellpadding=\"6\" cellspacing=\"0\" style=\"border-collapse: collapse; font-family: Arial; font-size: 14px;\">\n    <thead>\n      <tr style=\"background-color: #f2f2f2;\">\n        <th>Company</th>\n        <th>Job Title</th>\n        <th>Location</th>\n        <th>Source</th>\n        <th>Link</th>\n      </tr>\n    </thead>\n    <tbody>\n`;\n\n// Add table rows\nfor (const job of jobs) {\n  html += `\n    <tr>\n      <td>${job.json.company}</td>\n      <td>${job.json.jobTitle}</td>\n      <td>${job.json.location}</td>\n      <td>${job.json.source}</td>\n      <td><a href=\"${job.json.link}\" target=\"_blank\">View</a></td>\n    </tr>\n  `;\n}\n\nhtml += `\n    </tbody>\n  </table>\n`;\n\n// Output result\nreturn {\n  json: {\n    html\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2796,
+        1000
+      ],
+      "id": "782c8c25-ff80-4115-9fb8-7ffad691fa1a",
+      "name": "HTML Formatter"
+    },
+    {
+      "parameters": {
+        "sendTo": "pnarotam@gmail.com",
+        "subject": "=Pranay Job Listings for {{ new Date().toLocaleString('sv-SE', {timeZone: 'Pacific/Auckland'}).replace(' ', 'T').substring(0, 10) }}",
+        "message": "={{ $json.html }}",
+        "options": {}
       },
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1200,
-        100
+        3016,
+        1000
       ],
-      "id": "1715dbb9-4f2f-425c-95e3-3777f24911e9",
-      "name": "Gmail",
-      "webhookId": "bc95aa03-0351-463e-813f-a8a958fd31fa",
+      "id": "98785399-a174-4bcb-8414-f75f84ccc03d",
+      "name": "Send Email",
+      "webhookId": "d5a967b6-3a80-4406-8468-de5685a0d95c",
       "credentials": {
         "gmailOAuth2": {
           "id": "alv8Tx6ih2bW9kmT",
           "name": "Gmail account"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 10,
+        "simple": false,
+        "filters": {
+          "q": "is:unread (from:glassdoor.com) ",
+          "receivedAfter": "={{ new Date().toDateTime().minus(2, 'days').format('yyyy-MM-dd hh:mm:ss')}}"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        440
+      ],
+      "id": "4dd06a73-024a-4ca4-ba1d-13d7f27cfde4",
+      "name": "test Glassdoor emails",
+      "webhookId": "3dc21083-1760-49b4-b4d3-aceda9de293a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "alv8Tx6ih2bW9kmT",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 10,
+        "simple": false,
+        "filters": {
+          "q": "is:unread (from:glassdoor.com) ",
+          "receivedAfter": "={{ new Date().toDateTime().minus(2, 'days').format('yyyy-MM-dd hh:mm:ss')}}"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -80
+      ],
+      "id": "a41214cd-40fd-4cd0-8bff-658033b32825",
+      "name": "test Glassdoor emails1",
+      "webhookId": "3dc21083-1760-49b4-b4d3-aceda9de293a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "alv8Tx6ih2bW9kmT",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "simple": false,
+        "filters": {
+          "labelIds": [],
+          "q": "is:unread (from:seek.co.nz) ",
+          "receivedAfter": "={{ new Date().toDateTime().minus(2, 'days').format('yyyy-MM-dd hh:mm:ss')}}"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        220,
+        180
+      ],
+      "id": "19b640b3-d3e1-4ad0-8a37-ffa6888c3858",
+      "name": "test seek emails",
+      "webhookId": "3dc21083-1760-49b4-b4d3-aceda9de293a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "alv8Tx6ih2bW9kmT",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        440,
+        700
+      ],
+      "id": "167805e4-ee7c-4ab8-958e-ca13ddb4854a",
+      "name": "Mark Mail as read",
+      "webhookId": "0daefee2-048d-48cf-b706-77d071adc452",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "alv8Tx6ih2bW9kmT",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n\n\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        180
+      ],
+      "id": "0b20ed78-da9a-4b55-938e-74e8cb92fc4e",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a job parser. Given the following email text from the email, extract and return a json object with the following fields:\n- starred - if the job description has the word java in it, mark it as starred\n- company\n- job title\n- location\n- link - identify the link for the job description\n- source\n\nif the source is from seek. Clean the job link to remove all tracking or referrel parameters. Here is the email content:\nIf the job description has the word java in it, than mark it as starred\n\n\n {{ $json.text }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        660,
+        1100
+      ],
+      "id": "06e37973-519c-4384-888a-6cfefebc5f70",
+      "name": "Filter Seek Data",
+      "credentials": {
+        "openAiApi": {
+          "id": "byHxTSrfXt76LB83",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        1080,
+        1000
+      ],
+      "id": "7a43fd6e-525e-4f5a-82c3-75c524a5bba3",
+      "name": "Merge"
     }
   ],
   "pinData": {},
@@ -253,7 +653,7 @@
       "main": [
         [
           {
-            "node": "Filter Linkedin Data",
+            "node": "Switch",
             "type": "main",
             "index": 0
           }
@@ -264,18 +664,168 @@
       "main": [
         [
           {
-            "node": "Google Sheets",
+            "node": "Merge",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Google Sheets": {
+    "Switch": {
       "main": [
         [
           {
-            "node": "Gmail",
+            "node": "Filter Linkedin Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Filter Glassdoor Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Filter Seek Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Glassdoor Data": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Add to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Fields": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Data": {
+      "main": [
+        [
+          {
+            "node": "Query Current Job List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Current Job List": {
+      "main": [
+        [
+          {
+            "node": "Filter List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter List": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to Sheets": {
+      "main": [
+        [
+          {
+            "node": "HTML Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML Formatter": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "test Glassdoor emails": {
+      "main": [
+        []
+      ]
+    },
+    "Send Email": {
+      "main": [
+        []
+      ]
+    },
+    "Mark Mail as read": {
+      "main": [
+        []
+      ]
+    },
+    "test seek emails": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Seek Data": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Set Fields",
             "type": "main",
             "index": 0
           }
@@ -283,14 +833,14 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "97222819-6c00-4019-8068-9e2ff005d0e7",
+  "versionId": "f3951a7c-5412-48ef-858f-f6b276c4af5b",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "1df629342a4f69cceda9023475d89654552c05879ddea1f22f4646cbe908bf48"
+    "instanceId": "e298017de092a534920277341fd78892759a1ec93a3b4be5beee94cd7cf6f1a8"
   },
   "id": "66InE1SHlQ58MmVQ",
   "tags": []
