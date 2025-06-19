@@ -1,0 +1,460 @@
+{
+  "name": "ai-newsletter-summary",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        760
+      ],
+      "id": "8fde77f7-de67-4e7b-b037-5157be2f2e4f",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Please summarize the following AI newsletter titled \"{{ $json.emailSubject }}\".\n\nYou are an expert AI assistant specializing in comprehensively summarizing AI newsletters. Your primary goal is to extract and present all valuable information in a clear, concise, and actionable manner.\n\nWhen presenting the information, please try to categorize each distinct piece of information within your summary for THIS newsletter. Use the following prefixes at the beginning of the line/item where the information is presented:\n- For general news, announcements, or significant developments: \"CATEGORY: News - \"\n- For new tools, software, platforms, or updates to existing ones: \"CATEGORY: Tool - \"\n- For blog posts, articles, research papers, or significant written content: \"CATEGORY: Blog/Article - \"\n- For actionable AI tips, tutorials, or how-tos: \"CATEGORY: Tip/Tutorial - \"\n- For other valuable insights (e.g., upcoming events, datasets, important discussions not fitting above): \"CATEGORY: Insight - \"\n\nFor example:\nCATEGORY: News - XYZ Corp announced their new AlphaAI model today.\nCATEGORY: Tool - BetaBuilder (https://example.com/betabuilder) - A platform for no-code AI app development.\nCATEGORY: Blog/Article - \"The Ethics of Generative AI\" (https://example.com/ethics-genai) - A must-read analysis.\nCATEGORY: Tip/Tutorial - Learn to fine-tune Llama 3 with this guide: (https://example.com/llama-guide)\nCATEGORY: Insight - For other valuable insights\n\nYour summary for this newsletter should capture:\n1.  Key News & Announcements.\n2.  New Tools & Platforms (include name and direct URL if available).\n3.  Significant Blog Posts, Articles & Research (include title and URL if available).\n4.  Actionable AI Tips & Tutorials (include tutorial and link if available).\n5.  Other Valuable Insights.\n\nIf the newsletter has its own distinct sections, try to reflect that while still applying the CATEGORY prefixes to individual items. Ensure your summary is comprehensive and includes useful links.\nNewsletter Content:\n {{ $json.emailBody }}",
+              "role": "system"
+            },
+            {
+              "content": "=Please summarize the following AI newsletter titled  {{ $json.emailSubject }}\n\n{{ $json.emailBody }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        860,
+        685
+      ],
+      "id": "302cead9-f5a1-4905-abf9-1b8d79a28c92",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "byHxTSrfXt76LB83",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 5
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -20,
+        560
+      ],
+      "id": "35c3edfa-6a31-482e-a5c1-6732b1f74480",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cc6208a4-e70b-4e64-b007-71f2b2fb4b8c",
+              "name": "formattedSummary",
+              "value": "={{ $json.message.content }}",
+              "type": "string"
+            },
+            {
+              "id": "8ae52843-67b5-42e6-bd2c-786304c47507",
+              "name": "emailId",
+              "value": "={{ $('SetFields').item.json.emailId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1236,
+        760
+      ],
+      "id": "c32808e4-f5c8-4acd-919d-c91b77920cc0",
+      "name": "setFormattedSummary"
+    },
+    {
+      "parameters": {
+        "jsCode": "// This script assumes 'items' is an array of objects from the previous Set node,\n// where each object has 'item.json.formattedSummary' (the AI's output with CATEGORY: prefixes)\n// and 'item.json.emailId'.\n\nconst items = $input.all();\n\nconst allCategorizedData = {\n    news: [],\n    tools: [],\n    blogsArticles: [], // Changed from blogs to blogsArticles for clarity\n    tipsTutorials: [], // Changed from tips to tipsTutorials\n    insights: [],\n    uncategorized: [] // For items the AI didn't categorize or we couldn't parse\n};\n\nconst globallySeenUrls = new Set(); // For de-duplication across all categories\n\n// Helper function to extract URLs\nfunction extractUrls(text) {\n    if (!text) return [];\n    const urlRegex = /https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&//=]*)/g;\n    const matches = text.match(urlRegex);\n    return matches ? Array.from(new Set(matches)) : [];\n}\n\nfor (const item of items) {\n    if (!item.json.formattedSummary) {\n        continue;\n    }\n\n    // The AI's summary for ONE newsletter (item.json.formattedSummary)\n    // The AI was asked to prefix its \"## Newsletter Title\" before its content.\n    // We expect its content to now have \"CATEGORY: Xxx - ...\" lines.\n    const rawAiSummary = item.json.formattedSummary;\n\n    // Attempt to get the newsletter title (if the AI included it as per our older Set node format)\n    const titleMatch = rawAiSummary.match(/^## (.*)/m);\n    const newsletterSourceTitle = titleMatch ? titleMatch[1] : \"Unknown Newsletter\";\n\n    // Get content after the title and before the \"---\" separator if they exist\n    let contentToParse = rawAiSummary;\n    if (titleMatch) {\n        contentToParse = contentToParse.substring(titleMatch[0].length).trim();\n    }\n    contentToParse = contentToParse.replace(/---$/, '').trim();\n\n    const lines = contentToParse.split('\\n').map(line => line.trim()).filter(line => line.length > 0);\n\n    for (const line of lines) {\n        let categorized = false;\n        const itemContent = {\n            text: line, // Default to full line\n            urls: extractUrls(line),\n            source: newsletterSourceTitle // Add source for potential display\n        };\n\n        // Check for URLs and de-duplicate based on the first URL if multiple\n        let uniqueByUrl = true;\n        if (itemContent.urls.length > 0) {\n            if (globallySeenUrls.has(itemContent.urls[0])) { // Check primary URL for duplication\n                uniqueByUrl = false;\n            }\n        }\n        // If you want to check ALL URLs in an item for duplication:\n        // let hasNovelUrl = false;\n        // if (itemContent.urls.length > 0) {\n        //   for (const url of itemContent.urls) {\n        //     if (!globallySeenUrls.has(url)) {\n        //       hasNovelUrl = true;\n        //       break;\n        //     }\n        //   }\n        //   if (!hasNovelUrl) uniqueByUrl = false;\n        // }\n\n\n        if (!uniqueByUrl) {\n            continue; // Skip if this item (based on its primary URL) has already been seen\n        }\n\n        // Add URLs from this novel item to the global set\n        itemContent.urls.forEach(url => globallySeenUrls.add(url));\n\n\n        if (line.startsWith(\"CATEGORY: News - \")) {\n            itemContent.text = line.substring(\"CATEGORY: News - \".length).trim();\n            allCategorizedData.news.push(itemContent);\n            categorized = true;\n        } else if (line.startsWith(\"CATEGORY: Tool - \")) {\n            itemContent.text = line.substring(\"CATEGORY: Tool - \".length).trim();\n            allCategorizedData.tools.push(itemContent);\n            categorized = true;\n        } else if (line.startsWith(\"CATEGORY: Blog/Article - \")) {\n            itemContent.text = line.substring(\"CATEGORY: Blog/Article - \".length).trim();\n            allCategorizedData.blogsArticles.push(itemContent);\n            categorized = true;\n        } else if (line.startsWith(\"CATEGORY: Tip/Tutorial - \")) {\n            itemContent.text = line.substring(\"CATEGORY: Tip/Tutorial - \".length).trim();\n            allCategorizedData.tipsTutorials.push(itemContent);\n            categorized = true;\n        } else if (line.startsWith(\"CATEGORY: Insight - \")) {\n            itemContent.text = line.substring(\"CATEGORY: Insight - \".length).trim();\n            allCategorizedData.insights.push(itemContent);\n            categorized = true;\n        }\n\n        if (!categorized && line.length > 10) { // If not categorized but seems like content\n            // To avoid adding the original \"## Newsletter Title\" or \"---\" if they slipped through\n            if (!line.startsWith(\"## \") && line !== \"---\") {\n                 allCategorizedData.uncategorized.push(itemContent);\n            }\n        }\n    }\n}\n\n// 3. Assemble the final digest in Markdown format\nlet finalDigestMarkdown = `# Daily AI Digest - ${new Date().toLocaleDateString('en-CA')}\\n\\n`; // Main title\n\nconst categoryOrder = [\n    { key: 'news', title: '📰 AI News & Announcements' },\n    { key: 'tools', title: '🛠️ New Tools & Platforms' },\n    { key: 'blogsArticles', title: '📄 Blogs, Articles & Research' },\n    { key: 'tipsTutorials', title: '💡 AI Tips & Tutorials' },\n    { key: 'insights', title: '✨ Other Valuable Insights' },\n    { key: 'uncategorized', title: '📎 Uncategorized Items' }\n];\n\nfor (const category of categoryOrder) {\n    const itemsInCategory = allCategorizedData[category.key];\n    if (itemsInCategory.length > 0) {\n        finalDigestMarkdown += `## ${category.title}\\n\\n`;\n        for (const entry of itemsInCategory) {\n            // Include source if you want: (from ${entry.source})\n            finalDigestMarkdown += `*   ${entry.text}\\n`;\n        }\n        finalDigestMarkdown += `\\n`; // Add a newline after the list for spacing\n    }\n}\n\nif (finalDigestMarkdown.length < 100) { // Arbitrary length to check if anything was added\n    finalDigestMarkdown = \"# Daily AI Digest\\n\\nNo new unique AI newsletter content found today, or content could not be categorized.\";\n}\n\n// Collect all email IDs that were processed (useful for marking as read)\nconst emailIdsToMarkRead = items.map(item => item.json.emailId).filter(id => id);\n\nreturn [{\n    json: {\n        finalDigest: finalDigestMarkdown,\n        emailIdsToMarkRead: emailIdsToMarkRead\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        335
+      ],
+      "id": "2f12c06e-2cc3-4c6f-b811-f41824f9ae84",
+      "name": "AggregateSummaries"
+    },
+    {
+      "parameters": {
+        "mode": "markdownToHtml",
+        "markdown": "={{ $json.finalDigest }}",
+        "destinationKey": "htmlSummary",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        938,
+        160
+      ],
+      "id": "ec1284a2-a7f0-4a9a-9edb-78551a48ad98",
+      "name": "MarkdownToHTML"
+    },
+    {
+      "parameters": {
+        "sendTo": "pnarotam@gmail.com",
+        "subject": "=Daily AI Newsletter Digest - {{ new Date().toLocaleDateString('en-NZ') }}",
+        "message": "={{ $json.htmlSummary }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1236,
+        160
+      ],
+      "id": "301ddbd9-cf3c-49a3-92e3-5b978c27f248",
+      "name": "SendEmail",
+      "webhookId": "c93e970c-d378-4144-8bf1-eaef77f443cf",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "alv8Tx6ih2bW9kmT",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Mark Emails As Read",
+        "height": 300,
+        "width": 820
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        840,
+        340
+      ],
+      "id": "7fe7d699-d375-4d35-9b33-26a752f5e92b",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        420,
+        685
+      ],
+      "id": "8edc9071-48b9-4d92-9e32-30311df4e4db",
+      "name": "LoopingEmails"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 15,
+        "simple": false,
+        "filters": {
+          "q": "=label:\"blogs-8020-ai\" OR label:\"blogs-ai-ai-corner\" OR label:\"blogs-ai-ai-native-dev\" OR label:\"blogs-ai-superhuman-ai\" OR label:\"blogs-ai-fire\" OR label:\"blogs-the-rundown-ai\" OR label:\"blogs-the-rundown-university\"",
+          "readStatus": "unread",
+          "receivedAfter": "={{ DateTime.now().minus({ days: 1 }).toISODate() }}"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        200,
+        685
+      ],
+      "id": "7d68aacd-3eb4-42c0-b20d-0eb5698a8ac7",
+      "name": "ReadGmail",
+      "webhookId": "793f01e7-4d88-4003-9724-e72df5acfebc",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "alv8Tx6ih2bW9kmT",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "378fa6d3-7512-4c3b-8849-3d5f9dfff3a1",
+              "name": "emailSubject",
+              "value": "={{ $json.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "799bc43f-49a0-4d27-85d1-b96ab75d05b6",
+              "name": "emailBody",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "5e473bab-4fd4-44d1-8a23-a2ceeb9c9930",
+              "name": "emailId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        685
+      ],
+      "id": "1e73473b-1350-4ded-9fc2-c9436d7fad77",
+      "name": "SetFields"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        938,
+        435
+      ],
+      "id": "7cad6d08-f13b-4393-af25-1fd85855736c",
+      "name": "LoopOverEmailId"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "emailIdsToMarkRead",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1236,
+        360
+      ],
+      "id": "c058316a-f8a0-4b64-aa1f-969401a55112",
+      "name": "SplitEmailId"
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $json.emailIdsToMarkRead }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1456,
+        435
+      ],
+      "id": "c31dc1f0-eaa6-4c53-a5a5-83c1ee6300d6",
+      "name": "MarkEmailAsRead",
+      "webhookId": "5b01f01a-ac15-4aab-835c-b62b353550bf",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "alv8Tx6ih2bW9kmT",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "ReadGmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "setFormattedSummary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "ReadGmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "setFormattedSummary": {
+      "main": [
+        [
+          {
+            "node": "LoopingEmails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AggregateSummaries": {
+      "main": [
+        [
+          {
+            "node": "MarkdownToHTML",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "LoopOverEmailId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MarkdownToHTML": {
+      "main": [
+        [
+          {
+            "node": "SendEmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SendEmail": {
+      "main": [
+        []
+      ]
+    },
+    "LoopingEmails": {
+      "main": [
+        [
+          {
+            "node": "AggregateSummaries",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SetFields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReadGmail": {
+      "main": [
+        [
+          {
+            "node": "LoopingEmails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SetFields": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LoopOverEmailId": {
+      "main": [
+        [],
+        [
+          {
+            "node": "SplitEmailId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitEmailId": {
+      "main": [
+        [
+          {
+            "node": "MarkEmailAsRead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MarkEmailAsRead": {
+      "main": [
+        [
+          {
+            "node": "LoopOverEmailId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Pacific/Auckland",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "2c0ca89c-c1c0-4599-b235-a35d1a767486",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e298017de092a534920277341fd78892759a1ec93a3b4be5beee94cd7cf6f1a8"
+  },
+  "id": "JWtDz44HutOT1rrR",
+  "tags": []
+}

@@ -1,0 +1,64 @@
+{
+  "name": "gmail-error-trigger",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "16e0cac2-cbbb-463a-a7e7-0cfd09f55387",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "sendTo": "pnarotam@gmail.com",
+        "subject": "N8N Error",
+        "message": "={{ $json.execution.error.message }}\n\n{{ $json.execution.error.stack }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        220,
+        0
+      ],
+      "id": "554dfe07-b732-4d7a-947e-63da00a6421f",
+      "name": "Gmail",
+      "webhookId": "b18f0b15-e3c6-4ded-a214-29f4edc72f0e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "alv8Tx6ih2bW9kmT",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "abc89025-da63-4644-af7b-76ce7e334742",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e298017de092a534920277341fd78892759a1ec93a3b4be5beee94cd7cf6f1a8"
+  },
+  "id": "RbQR7braFf3xEV0h",
+  "tags": []
+}

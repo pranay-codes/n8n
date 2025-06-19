@@ -1,0 +1,613 @@
+{
+  "name": "n8n-tutorial-part-2",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "abb4ec8c-eca2-42b2-a974-c8fd3ab36820",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://pokeapi.co/api/v2/pokemon",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "id": "d0eeaf8b-eb0d-4014-8a8f-41ff2d28437e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        0
+      ],
+      "id": "8731eefe-f71c-4ca7-a023-fd62660ad1ec",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "jsCode": "let items = $input.all();\nreturn items[0].json.results.map(item => {\n\treturn {\n\t\tjson: item\n\t}\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        -180
+      ],
+      "id": "4f3e6f3a-eaf9-418b-9509-0a25ab9d0417",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "url": "https://blog.n8n.io/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        280
+      ],
+      "id": "6d3224c5-ef19-407c-9e83-22380f5f09fb",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "title",
+              "cssSelector": ".post .item-title a",
+              "returnValue": "html"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        280
+      ],
+      "id": "d7d9a21c-f350-4c12-b668-e23f320cb505",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "mode": "jsonToxml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        -360
+      ],
+      "id": "f9ad9b6e-40db-4d72-bbc9-353c10d48e63",
+      "name": "XML"
+    },
+    {
+      "parameters": {
+        "operation": "getAllPeople",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.n8nTrainingCustomerDatastore",
+      "typeVersion": 1,
+      "position": [
+        180,
+        -600
+      ],
+      "id": "576fc03c-f760-4ffd-b2aa-f490e015151d",
+      "name": "Customer Datastore (n8n training)"
+    },
+    {
+      "parameters": {
+        "operation": "roundDate",
+        "date": "={{ $json.created }}",
+        "mode": "roundUp",
+        "outputFieldName": "createdDate",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        440,
+        -600
+      ],
+      "id": "0841e6ea-5083-4cfa-8291-de997432b3a8",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6df1ea61-02bf-4d52-9331-2943b1abfdbc",
+              "leftValue": "={{ $json.createdDate }}",
+              "rightValue": "1960-01-01T00:00:00",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        700,
+        -600
+      ],
+      "id": "307a1ad7-12f1-4b4c-a539-a3dcfe44b2db",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        920,
+        -700
+      ],
+      "id": "d232243d-18d5-40cf-aeed-46fe1b8861d1",
+      "name": "Wait",
+      "webhookId": "0fe98fd6-eccc-4c89-a754-6a7c806d3271"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "35b5d36e-5417-4a10-a2c1-c62092366f4e",
+              "name": "outputValue",
+              "value": "={{ $json.createdDate }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1140,
+        -700
+      ],
+      "id": "22d7cae1-07a4-4488-b104-e1d41a300413",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "https://media.kaspersky.com/pdf/Kaspersky_Lab_Whitepaper_Anti_blocker.pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        320,
+        540
+      ],
+      "id": "046e5cb3-e469-4645-b881-a770f065e043",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        540,
+        540
+      ],
+      "id": "3d2c54df-8067-49a0-bd90-54216d6bef23",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "url": "https://poetrydb.org/random/1.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        360,
+        880
+      ],
+      "id": "1fcaa2a8-ccca-4e3c-8686-491f8b1349d4",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        580,
+        880
+      ],
+      "id": "d81d74e8-1338-4197-a3bd-1ee0a444dced",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "test.txt",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        800,
+        880
+      ],
+      "id": "b82fa21f-a8e3-4acb-a8af-5bb24a8cdaf9",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "fileSelector": "test.txt",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1020,
+        880
+      ],
+      "id": "dff661f6-1095-44ab-919a-41fd638e418e",
+      "name": "Read/Write Files from Disk1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        580,
+        1200
+      ],
+      "id": "10c658e9-e8a7-4b89-9f71-963d323976cb",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "getAllPeople",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.n8nTrainingCustomerDatastore",
+      "typeVersion": 1,
+      "position": [
+        280,
+        1140
+      ],
+      "id": "67758dfd-493a-40bd-a8bb-a28e2bbb82b8",
+      "name": "Customer Datastore (n8n training)1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const characters = [{name: \"John Doe\",\n                   language: \"english\",\n                   country : {\n                     code: \"NZ\",\n                     name: \"New Zealand\"\n                   }\n                   },\n                  {name: \"Mark Smith\",\n                   language: \"spanish\",\n                   country : {\n                     code: \"SP\",\n                     name: \"Spain\"\n                   }\n                   }];\n\nreturn characters.map(character => ({ json: character }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        1380
+      ],
+      "id": "788f6ea4-fe32-43f8-a41f-14c2b02bf4ab",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "jsCode": "let urls = [\n\t{\n\t\tjson: {\n\t\turl: 'https://medium.com/feed/n8n-io'\n\t\t}\n\t},\n\t{\n\tjson: {\n\t\turl: 'https://dev.to/feed/n8n'\n\t\t} \n\t}\n]\nreturn urls;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        1680
+      ],
+      "id": "ea0038d9-10da-4657-9058-d4022fd318c6",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        480,
+        1680
+      ],
+      "id": "594be8d0-9c08-4432-8e7b-25018fd32ef2",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        700,
+        1780
+      ],
+      "id": "6ad6668c-65fa-4bb7-906d-7674c2986fdb",
+      "name": "RSS Read"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Customer Datastore (n8n training)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Customer Datastore (n8n training)1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "XML",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "XML": {
+      "main": [
+        []
+      ]
+    },
+    "Customer Datastore (n8n training)": {
+      "main": [
+        [
+          {
+            "node": "Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk1": {
+      "main": [
+        []
+      ]
+    },
+    "Customer Datastore (n8n training)1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c49a29eb-01f0-4e09-92e0-d78d86ed51c8",
+  "meta": {
+    "instanceId": "e298017de092a534920277341fd78892759a1ec93a3b4be5beee94cd7cf6f1a8"
+  },
+  "id": "HzniKV6tg6E1IkNW",
+  "tags": []
+}
