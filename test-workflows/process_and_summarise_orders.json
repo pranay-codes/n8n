@@ -1,0 +1,142 @@
+{
+  "name": "process-and-summarise-orders",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1S3qAJFCGX-gpj6WSIkSHwYTiS0OITvqfWLsAkTYTAAA",
+          "mode": "list",
+          "cachedResultName": "workflow-1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1S3qAJFCGX-gpj6WSIkSHwYTiS0OITvqfWLsAkTYTAAA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1S3qAJFCGX-gpj6WSIkSHwYTiS0OITvqfWLsAkTYTAAA/edit#gid=0"
+        },
+        "options": {
+          "columnsToWatch": [
+            "Status"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "79f10a5c-c519-4aec-a961-49f9b000342f",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "Udh4Vdt7VRNqcWOK",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are in charge of client orders. Your job is to take the incoming information regarding new orders and give it a nice summary that will be emailed to the team. The email should be signed off from the Customer Success Team\n\nHere is the information on the client orders:\nOrderID: {{ $json.OrderID }}\nCustomerName: {{ $json.CustomerName }}\nProduct: {{ $json.Product }}\nQuantity: {{ $json.Quantity }}\nPrice: {{ $json.Price }}\nOrderDate: {{ $json.OrderDate }}\nStatus: {{ $json.Status }}\n\nPlease output the following parameters:\nEmail Subject\nEmail Body",
+              "role": "system"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        220,
+        0
+      ],
+      "id": "2e5bda00-1ec0-49a5-b723-33cef5290f34",
+      "name": "Summarise",
+      "credentials": {
+        "openAiApi": {
+          "id": "byHxTSrfXt76LB83",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "pnarotam@gmail.com",
+        "subject": "={{ $json.message.content.EmailSubject }}",
+        "message": "={{ $json.message.content.EmailBody }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        580,
+        0
+      ],
+      "id": "657f4a64-7b6b-45bd-886e-afaa127b4532",
+      "name": "Gmail",
+      "webhookId": "822f491a-1314-48ae-bcb9-10583b84dc27",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "alv8Tx6ih2bW9kmT",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Summarise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarise": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "95bc1639-9d02-4b13-80ca-efe3bba1e639",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e298017de092a534920277341fd78892759a1ec93a3b4be5beee94cd7cf6f1a8"
+  },
+  "id": "FHMxAB7KBLLAluWR",
+  "tags": []
+}
