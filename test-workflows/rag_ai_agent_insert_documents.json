@@ -1,0 +1,188 @@
+{
+  "name": "rag-ai-agent-insert-documents",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c52509b5-9051-4e04-94d1-db8011ed2905",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "13eIYj_h_zrEIiqnT9nz5Kw0q4W2oKTMs",
+          "mode": "list",
+          "cachedResultName": "Berkshire Hathaway - 2024 - 10k.pdf",
+          "cachedResultUrl": "https://drive.google.com/file/d/13eIYj_h_zrEIiqnT9nz5Kw0q4W2oKTMs/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        220,
+        0
+      ],
+      "id": "3b4120cb-b1ed-4194-9b32-a19b7a1acd26",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "HLIzFVbcR9KFgsrD",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "n8n-rag-001",
+          "mode": "list",
+          "cachedResultName": "n8n-rag-001"
+        },
+        "options": {
+          "pineconeNamespace": "berkshire"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        0
+      ],
+      "id": "38960410-4bb4-451c-989c-c48bcd1434ea",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "wSV7S3JbB7KpMUoL",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "dimensions": 512
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        500,
+        220
+      ],
+      "id": "42f90634-3875-43a4-9d67-ec9cc1b5c585",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "byHxTSrfXt76LB83",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        680,
+        220
+      ],
+      "id": "7baed4ed-c801-43ac-9fb3-bf820de4066a",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        780,
+        440
+      ],
+      "id": "0e7ca906-1fd3-4ba2-b031-cb99a78df1a6",
+      "name": "Recursive Character Text Splitter"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "603fa67b-f8e1-4b8e-98f7-5a3802a99d05",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e298017de092a534920277341fd78892759a1ec93a3b4be5beee94cd7cf6f1a8"
+  },
+  "id": "40cgbZn64IA6Bt5g",
+  "tags": []
+}

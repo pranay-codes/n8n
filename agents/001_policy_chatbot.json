@@ -1,0 +1,165 @@
+{
+  "name": "001-policy-chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -140,
+        -420
+      ],
+      "id": "56ad9f04-6042-45c3-bad7-ccb375f4e326",
+      "name": "When chat message received",
+      "webhookId": "56c7ee95-4d56-4f18-9484-5c745cf3b5eb"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a helpful assistant in reading company documents stored in a vector store. Answer any questions in a friendly tone and retrieve information from the vector db."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        96,
+        -520
+      ],
+      "id": "e1d60833-1e70-45b5-a5b1-32c1f881921b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        80,
+        -300
+      ],
+      "id": "aaee0871-a97d-49cb-ba60-156ee5198bdc",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "byHxTSrfXt76LB83",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "knowledge_base",
+        "toolDescription": "Call this tool to retrieve company documents",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "n8n-agent-001",
+          "mode": "list",
+          "cachedResultName": "n8n-agent-001"
+        },
+        "options": {
+          "pineconeNamespace": "FAQ"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.1,
+      "position": [
+        200,
+        -297.5
+      ],
+      "id": "cc4e6908-3cac-40e9-b415-5f02ca9a47f2",
+      "name": "DocumentStorage",
+      "credentials": {
+        "pineconeApi": {
+          "id": "wSV7S3JbB7KpMUoL",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        300,
+        -80
+      ],
+      "id": "f521b577-cd24-41ed-af5c-e338f708d6c8",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "byHxTSrfXt76LB83",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DocumentStorage": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "DocumentStorage",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f1fc6da2-e6e9-4447-9aa7-544f5cba3362",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e298017de092a534920277341fd78892759a1ec93a3b4be5beee94cd7cf6f1a8"
+  },
+  "id": "6i6OF6bV0t7xYfX1",
+  "tags": []
+}

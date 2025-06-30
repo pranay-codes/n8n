@@ -1,0 +1,359 @@
+{
+  "name": "002-customer-support-workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "id": "6c98d824-9375-4393-8c52-01068372f18d",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "alv8Tx6ih2bW9kmT",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Customer Support",
+              "description": "An email that is related to helping out a customer. They could be asking questions about our policies or questions about our products or services"
+            },
+            {
+              "category": "Other",
+              "description": "Any email that is not customer support related"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1,
+      "position": [
+        220,
+        300
+      ],
+      "id": "efbb8c0e-6752-4e80-9a44-e16017b6cea0",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        308,
+        520
+      ],
+      "id": "60d0b4e2-a05e-421f-93a4-428a580ec7c3",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "byHxTSrfXt76LB83",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        734,
+        500
+      ],
+      "id": "5854859a-f47f-4ffe-9461-9a959b4bd618",
+      "name": "Do Nothing"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=# Overview\nYou are an expert customer support agent for Tile Next (A small company that sells tiles to consumers, traders and professionals). Your job is to respod to incoming emails with relevant information using your KnowledgeBase tool.\n\n# Instructions\n- Your output should be friendly and professional\n- Sign off as Tyler from Tile Nest.\n\n# Output\n- Output only the body of the email"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        620,
+        -100
+      ],
+      "id": "6c98551c-1216-44c3-b9f6-4098e200266c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        596,
+        120
+      ],
+      "id": "2467bb4a-64b2-46a4-9c13-54d8a010059c",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "byHxTSrfXt76LB83",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "knowlege_base",
+        "toolDescription": "Call this  tool to access POlicy and FAQ regarding TileNest",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "n8n-agent-001",
+          "mode": "list",
+          "cachedResultName": "n8n-agent-001"
+        },
+        "options": {
+          "pineconeNamespace": "FAQ"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.1,
+      "position": [
+        716,
+        122.5
+      ],
+      "id": "3f6a11e3-6309-41a7-b79e-b6a396efcb33",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "wSV7S3JbB7KpMUoL",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "dimensions": 512
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        804,
+        320
+      ],
+      "id": "993046e2-9a9a-4d76-be46-7accc3ce2028",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "byHxTSrfXt76LB83",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.from.value[0].address }}",
+        "subject": "=Re - {{ $('Gmail Trigger').item.json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        980,
+        -100
+      ],
+      "id": "d592cd05-44a6-48a1-83b1-245e397944fb",
+      "name": "Gmail",
+      "webhookId": "404a9269-2d0c-4528-9e8d-1af26921914c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "alv8Tx6ih2bW9kmT",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Gmail Trigger": [
+      {
+        "json": {
+          "id": "197bea5bc9323da6",
+          "threadId": "197bea407783e910",
+          "labelIds": [
+            "UNREAD",
+            "IMPORTANT",
+            "SENT",
+            "INBOX"
+          ],
+          "sizeEstimate": 1180,
+          "headers": {
+            "mime-version": "MIME-Version: 1.0",
+            "date": "Date: Mon, 30 Jun 2025 14:23:42 +1200",
+            "message-id": "Message-ID: <CANy=CQfy9cboREOk4p-k=H-0y_-f-61q8rZVbi2eVCQ2ZoyAxA@mail.gmail.com>",
+            "subject": "Subject: Support Call",
+            "from": "From: Pranay Narotam <pnarotam@gmail.com>",
+            "to": "To: Pranay Narotam <pnarotam@gmail.com>",
+            "content-type": "Content-Type: multipart/alternative; boundary=\"0000000000006c35b60638c0b74b\""
+          },
+          "html": "<div dir=\"ltr\"><div>What is the policy regarding damaged goods? I&#39;m concerned that some tiles might break.</div><div><br></div><span class=\"gmail_signature_prefix\">-- </span><br><div dir=\"ltr\" class=\"gmail_signature\" data-smartmail=\"gmail_signature\"><div dir=\"ltr\"><div><div dir=\"ltr\"><div><div dir=\"ltr\"><div><div dir=\"ltr\"><div>Regards,</div><div><br></div><span></span><span></span>Pranay Narotam</div></div></div></div></div></div></div></div></div>\n",
+          "text": "What is the policy regarding damaged goods? I'm concerned that some tiles\nmight break.\n\n-- \nRegards,\n\nPranay Narotam\n",
+          "textAsHtml": "<p>What is the policy regarding damaged goods? I&apos;m concerned that some tiles<br/>might break.</p><p>--<br/>Regards,</p><p>Pranay Narotam</p>",
+          "subject": "Support Call",
+          "date": "2025-06-30T02:23:42.000Z",
+          "to": {
+            "value": [
+              {
+                "address": "pnarotam@gmail.com",
+                "name": "Pranay Narotam"
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">Pranay Narotam</span> &lt;<a href=\"mailto:pnarotam@gmail.com\" class=\"mp_address_email\">pnarotam@gmail.com</a>&gt;</span>",
+            "text": "\"Pranay Narotam\" <pnarotam@gmail.com>"
+          },
+          "from": {
+            "value": [
+              {
+                "address": "pnarotam@gmail.com",
+                "name": "Pranay Narotam"
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">Pranay Narotam</span> &lt;<a href=\"mailto:pnarotam@gmail.com\" class=\"mp_address_email\">pnarotam@gmail.com</a>&gt;</span>",
+            "text": "\"Pranay Narotam\" <pnarotam@gmail.com>"
+          },
+          "messageId": "<CANy=CQfy9cboREOk4p-k=H-0y_-f-61q8rZVbi2eVCQ2ZoyAxA@mail.gmail.com>"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Do Nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c502b13b-267d-45c6-a3b4-52b57026e415",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e298017de092a534920277341fd78892759a1ec93a3b4be5beee94cd7cf6f1a8"
+  },
+  "id": "IOS89AO0z8StKTby",
+  "tags": []
+}
