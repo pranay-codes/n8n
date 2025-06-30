@@ -81,7 +81,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "=Bearer "
             }
           ]
         },
@@ -302,7 +302,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "3e8bcd3f-b616-45c9-aa38-76b3c68fea27",
+  "versionId": "f9ddc5dc-d4ab-4a3e-81fa-ab02cc4591dd",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "e298017de092a534920277341fd78892759a1ec93a3b4be5beee94cd7cf6f1a8"
