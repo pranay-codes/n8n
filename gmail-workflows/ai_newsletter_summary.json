@@ -184,7 +184,7 @@
         "limit": 15,
         "simple": false,
         "filters": {
-          "q": "=label:\"blogs-8020-ai\" OR label:\"blogs-ai-ai-corner\" OR label:\"blogs-ai-ai-native-dev\" OR label:\"blogs-ai-superhuman-ai\" OR label:\"blogs-ai-fire\" OR label:\"blogs-the-rundown-ai\" OR label:\"blogs-the-rundown-university\"",
+          "q": "=label:\"blogs-8020-ai\" OR label:\"blogs-ai-ai-corner\" OR label:\"blogs-ai-ai-native-dev\" OR label:\"blogs-ai-superhuman-ai\" OR label:\"blogs-ai-fire\" OR label:\"blogs-the-rundown-ai\" OR label:\"blogs-the-rundown-university\" OR label:\"label:blogs-ai-towards-data-science\"",
           "readStatus": "unread",
           "receivedAfter": "={{ DateTime.now().minus({ days: 1 }).toISODate() }}"
         },
@@ -450,10 +450,10 @@
     "timezone": "Pacific/Auckland",
     "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "2c0ca89c-c1c0-4599-b235-a35d1a767486",
+  "versionId": "974cbebd-e59d-44bf-83a0-3c504c494f6c",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "e298017de092a534920277341fd78892759a1ec93a3b4be5beee94cd7cf6f1a8"
+    "instanceId": "eed468ab09b6a666b5d1df860a93bcaeaa0f22d05182dc6a6208e99ffdc85c8c"
   },
   "id": "JWtDz44HutOT1rrR",
   "tags": []

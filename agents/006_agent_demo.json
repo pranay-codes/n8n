@@ -1,0 +1,233 @@
+{
+  "name": "006-agent-demo",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "fcc93972-3b0b-4e26-9679-706ce7682d32",
+      "name": "When chat message received",
+      "webhookId": "7c9cbf9a-8337-4581-9344-8f703b314d64"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are an expert Personal Assistant.\n\nAlways looking into the contactsdb for contact details before creating an event or sending an email. You need the persons email address before sending the email.\n\nThe current data/time is : {{ $now }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        372,
+        0
+      ],
+      "id": "250afdb6-43e2-4924-9767-c7d7b81ce41a",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        220,
+        220
+      ],
+      "id": "9a4437b6-562d-4ff7-bc1c-08ecd215f5b9",
+      "name": "GPT-40-mini",
+      "credentials": {
+        "openRouterApi": {
+          "id": "CTDD4KXRsMsuGUtZ",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        340,
+        220
+      ],
+      "id": "4f87ab5c-03e5-408c-851f-6d5974640cc2",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "18Hp7wKgpYEs7S3PjKVY2g7bGhFr26i7yGJHVRW87eWk",
+          "mode": "list",
+          "cachedResultName": "007-agent-tutorial",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18Hp7wKgpYEs7S3PjKVY2g7bGhFr26i7yGJHVRW87eWk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18Hp7wKgpYEs7S3PjKVY2g7bGhFr26i7yGJHVRW87eWk/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.5,
+      "position": [
+        460,
+        220
+      ],
+      "id": "4e56dc7a-c0f3-473c-9bf3-8158ea6c37e6",
+      "name": "ContactsDB",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xRHHFqE3ruvgkRoT",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "emailType": "text",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        580,
+        220
+      ],
+      "id": "8eb837a0-16d5-433a-8767-64799032ace7",
+      "name": "Send Email",
+      "webhookId": "0c87948a-58ee-4306-b870-9a324045ac3f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "alv8Tx6ih2bW9kmT",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "pnarotam@gmail.com",
+          "mode": "list",
+          "cachedResultName": "pnarotam@gmail.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        700,
+        220
+      ],
+      "id": "fb35a9be-7ce6-4c3f-a38b-c1ebe51b0450",
+      "name": "Create Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "Vsk6ANJw3otaDYHy",
+          "name": "Google Calendar account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-40-mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ContactsDB": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Pacific/Auckland",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1
+  },
+  "versionId": "f02d1885-8137-4e1b-ad39-4827903b0244",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eed468ab09b6a666b5d1df860a93bcaeaa0f22d05182dc6a6208e99ffdc85c8c"
+  },
+  "id": "daQoj2ZM5lmjjCKy",
+  "tags": []
+}
